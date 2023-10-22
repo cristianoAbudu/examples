@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Button,
 } from "react-native";
 import Constants from "expo-constants";
 import * as SQLite from "expo-sqlite";
@@ -70,25 +71,27 @@ function Items({ done: doneHeading, onPressItem }) {
 
 export default function App() {
   const [text, setText] = useState(null);
+  const [valor, setValor] = useState(null);
+
   const [forceUpdate, forceUpdateId] = useForceUpdate();
 
   useEffect(() => {
     db.transaction((tx) => {
       tx.executeSql(
-        "create table if not exists items (id integer primary key not null, done int, value text);"
+        "create table if not exists items (id integer primary key not null, done int, value text, valor integer);"
       );
     });
   }, []);
 
-  const add = (text) => {
-    // is text empty?
-    if (text === null || text === "") {
+  const add = (text, valor) => {
+    // is valor empty?
+    if (valor === null || valor === "") {
       return false;
     }
 
     db.transaction(
       (tx) => {
-        tx.executeSql("insert into items (done, value) values (0, ?)", [text]);
+        tx.executeSql("insert into items (done, value, valor) values (0, ?, ?)", [text, valor]);
         tx.executeSql("select * from items", [], (_, { rows }) =>
           console.log(JSON.stringify(rows))
         );
@@ -100,7 +103,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>SQLite Example</Text>
+      <Text style={styles.heading}>Controle Financeiro Fácil</Text>
 
       {Platform.OS === "web" ? (
         <View
@@ -114,14 +117,26 @@ export default function App() {
         <>
           <View style={styles.flexRow}>
             <TextInput
-              onChangeText={(text) => setText(text)}
-              onSubmitEditing={() => {
-                add(text);
-                setText(null);
-              }}
-              placeholder="what do you need to do?"
+              onChangeText={(valor) => setValor(valor)}
+              placeholder="Valor (R$)"
               style={styles.input}
               value={text}
+              keyboardType="numeric"
+            />
+            <TextInput
+              onChangeText={(text) => setText(text)}
+              placeholder="Descrição"
+              style={styles.input}
+              value={text}
+            />
+            
+            <Button
+              title="OK"
+              onPress={() => {
+                add(text, valor);
+                setValor(null);
+                setText(null);
+              }}
             />
           </View>
           <ScrollView style={styles.listArea}>
